@@ -2,7 +2,7 @@ package models
 
 import "errors"
 
-type RecordModel struct{
+type RecordModel struct {
 	ID          string
 	Title       string
 	Artist      string
@@ -10,9 +10,9 @@ type RecordModel struct{
 	Status      string
 }
 
-func (r *RecordModel) Validate {
-	if len(r.Title) == 0 || len(r.Artist) {
-		return errors.new("The album must have a title and a artist")
+func (r *RecordModel) Validate() error {
+	if r.Title == "" || r.Artist == "" {
+		return errors.New("The album must have a title and a artist")
 	}
 	return nil
 }
