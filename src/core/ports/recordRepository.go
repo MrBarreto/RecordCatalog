@@ -1,8 +1,8 @@
 package ports
 
-import {
-	"github.com/MrBarreto/RecordCatalog/src/core/models/models.go"
-}
+import (
+	"github.com/MrBarreto/RecordCatalog/src/core/models"
+)
 
 type RecordRepository interface {
 	CreateRecord(record models.RecordModel) error
