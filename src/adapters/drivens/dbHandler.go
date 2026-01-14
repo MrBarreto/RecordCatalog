@@ -33,17 +33,17 @@ type dbHandler struct {
 
 func (d *dbHandler) CreateRecord(record models.RecordModel) (int, error) {
 	var novoID int
-	sql := "INSERT INTO records (title, artist, releaseyear, status) VALUES ($1, $2, $3, $4)"
+	sql := "INSERT INTO records (title, artist, releaseyear, status) VALUES ($1, $2, $3, $4) RETURNING id"
 	err := d.connection.QueryRow(context.Background(), sql, record.Title, record.Artist, record.ReleaseYear, record.Status).Scan(&novoID)
 	if err != nil {
-		errString := fmt.Sprintf("addAlbum: %v", err)
+		errString := fmt.Sprintf("CreateRecord: %v", err)
 		return 0, errors.New(errString)
 	}
 	return novoID, nil
 }
 
 func (d *dbHandler) GetAlbumsByArtist(artist string) ([]models.RecordModel, error) {
-	sql := "SELECT title FROM records WHERE artist = $1"
+	sql := "SELECT id, title, artist, releaseyear, status FROM records WHERE artist = $1"
 	rows, err := d.connection.Query(context.Background(), sql, artist)
 
 	if err != nil {
@@ -92,8 +92,54 @@ func (d *dbHandler) GetAvailableArtists() ([]string, error) {
 	}
 
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("GetAvailableArtists %q: %v", err)
+		return nil, fmt.Errorf("GetAvailableArtists: %v", err)
 	}
 
 	return Artistlist, nil
+}
+
+func (d *dbHandler) GetAlbumByID(ID string) (models.RecordModel, error) {
+	var Record models.RecordModel
+	sql := "SELECT id, title, artist, releaseyear, status FROM records WHERE id = $1"
+	err := d.connection.QueryRow(context.Background(), sql, ID).Scan(&Record.ID, &Record.Title, &Record.Artist, &Record.ReleaseYear, &Record.Status)
+	if err != nil {
+		errString := fmt.Sprintf("GetAlbumByID: %s %v", ID, err)
+		return models.RecordModel{}, errors.New(errString)
+	}
+
+	return Record, nil
+}
+
+func (d *dbHandler) GetAlbums() ([]models.RecordModel, error) {
+	sql := "SELECT id, title, artist, releaseyear, status FROM records"
+	rows, err := d.connection.Query(context.Background(), sql)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var Recordlist []models.RecordModel
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var Record models.RecordModel
+		if err := rows.Scan(&Record.ID, &Record.Title, &Record.Artist, &Record.ReleaseYear, &Record.Status); err != nil {
+			return nil, fmt.Errorf("GetAlbums: %v", err)
+		}
+
+		Recordlist = append(Recordlist, Record)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("GetAlbums: %v", err)
+	}
+
+	return Recordlist, nil
+}
+
+func NewDBHandler(pool *pgxpool.Pool) *dbHandler {
+	return &dbHandler{
+		connection: pool,
+	}
 }
