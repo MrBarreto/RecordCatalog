@@ -5,7 +5,7 @@ import (
 )
 
 type RecordRepository interface {
-	CreateRecord(record models.RecordModel) error
+	CreateRecord(record models.RecordModel) (error, int)
 	GetAlbumsByArtist(artist string) ([]models.RecordModel, error)
 	GetAvailableArtists() ([]string, error)
 	GetAlbumByID(ID string) (models.RecordModel, error)
